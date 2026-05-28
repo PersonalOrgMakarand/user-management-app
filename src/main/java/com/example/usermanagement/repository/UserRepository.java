@@ -28,6 +28,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
 
     /**
+     * Looks up a user by name (case-insensitive).
+     *
+     * @param name name to search for
+     * @return {@link Optional} containing the first matching user if found
+     */
+    Optional<User> findFirstByNameIgnoreCase(String name);
+
+    /**
      * Checks whether a user with the given email already exists.
      *
      * @param email email address to check; must not be {@code null}

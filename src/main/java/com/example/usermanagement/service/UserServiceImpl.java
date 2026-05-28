@@ -4,6 +4,7 @@ import com.example.usermanagement.exception.DuplicateEmailException;
 import com.example.usermanagement.exception.UserNotFoundException;
 import com.example.usermanagement.model.User;
 import com.example.usermanagement.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +26,16 @@ import java.util.Objects;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Constructs the service.
      *
      * @param userRepository repository dependency; must not be {@code null}
      */
-    public UserServiceImpl(final UserRepository userRepository) {
+    public UserServiceImpl(final UserRepository userRepository, final PasswordEncoder passwordEncoder) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository must not be null");
+        this.passwordEncoder = Objects.requireNonNull(passwordEncoder, "passwordEncoder must not be null");
     }
 
     /**
@@ -63,6 +66,7 @@ public class UserServiceImpl implements UserService {
             throw new DuplicateEmailException(user.getEmail());
         }
 
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -147,7 +151,7 @@ public class UserServiceImpl implements UserService {
 
         existing.setName(updates.getName());
         existing.setEmail(updates.getEmail());
-        existing.setPassword(updates.getPassword());
+        existing.setPassword(passwordEncoder.encode(updates.getPassword()));
         existing.setRole(updates.getRole());
 
         return userRepository.save(existing);
