@@ -1,12 +1,13 @@
 # User Management Application
 
-A production-style Spring Boot 3 demo that exposes CRUD REST APIs for managing
-users, backed by an in-memory H2 database and documented with Swagger UI.
+A production-style Spring Boot 3 demo that exposes authentication and CRUD REST
+APIs for managing users, backed by an in-memory H2 database and documented with
+Swagger UI.
 
 ## Tech Stack
 
 - Java 17
-- Spring Boot 3.2.5 (Web, Data JPA, Validation)
+- Spring Boot 3.2.5 (Web, Data JPA, Validation, Security)
 - H2 in-memory database
 - springdoc-openapi 2.5.0 (Swagger UI)
 - Maven (embedded Tomcat)
@@ -66,7 +67,15 @@ docker run --rm -p 8080:8080 user-management-app
 
 ## REST API
 
-Base path: `http://localhost:8080/users`
+Auth base path: `http://localhost:8080/api/auth`  
+Users base path: `http://localhost:8080/users`
+
+### Authentication
+
+| Method | Path               | Description | Success |
+| ------ | ------------------ | ----------- | ------- |
+| POST   | `/api/auth/login`  | Login       | 200     |
+| POST   | `/api/auth/logout` | Logout      | 200     |
 
 | Method | Path           | Description       | Success |
 | ------ | -------------- | ----------------- | ------- |
@@ -79,24 +88,36 @@ Base path: `http://localhost:8080/users`
 ### Sample requests (curl)
 
 ```bash
+# Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"usernameOrEmail":"alice@example.com","password":"secret1"}'
+
 # Create
 curl -X POST http://localhost:8080/users \
+  -H "Authorization: ******" \
   -H "Content-Type: application/json" \
   -d '{"name":"Alice","email":"alice@x.com","password":"secret1","role":"ADMIN"}'
 
 # List
-curl http://localhost:8080/users
+curl -H "Authorization: ******" http://localhost:8080/users
 
 # Get by id
-curl http://localhost:8080/users/1
+curl -H "Authorization: ******" http://localhost:8080/users/1
 
 # Update
 curl -X PUT http://localhost:8080/users/1 \
+  -H "Authorization: ******" \
   -H "Content-Type: application/json" \
   -d '{"name":"Alice B","email":"alice@x.com","password":"secret1","role":"USER"}'
 
 # Delete
-curl -X DELETE http://localhost:8080/users/1
+curl -X DELETE http://localhost:8080/users/1 \
+  -H "Authorization: ******"
+
+# Logout
+curl -X POST http://localhost:8080/api/auth/logout \
+  -H "Authorization: ******"
 ```
 
 ### Error responses
@@ -104,8 +125,10 @@ curl -X DELETE http://localhost:8080/users/1
 | Status | When                                    |
 | ------ | --------------------------------------- |
 | 400    | Validation failed / illegal argument    |
+| 401    | Invalid credentials / unauthorized      |
 | 404    | User id does not exist                  |
 | 409    | Email already registered                |
+| 429    | Too many login attempts                 |
 | 500    | Unhandled server error                  |
 
 All errors are returned as a structured JSON body containing `timestamp`,
@@ -125,9 +148,6 @@ All errors are returned as a structured JSON body containing `timestamp`,
 
 ## Notes
 
-- Passwords are stored as plain text in this demo and are hidden from API
-  responses via `@JsonProperty(WRITE_ONLY)`. **Do not use this code as-is in
-  production** — add password hashing (e.g. BCrypt) and authentication
-  (Spring Security) before deploying anywhere real.
+- Passwords are stored as BCrypt hashes.
 - H2 is in-memory: all data is reset on restart. Seed records live in
   `src/main/resources/data.sql`.
