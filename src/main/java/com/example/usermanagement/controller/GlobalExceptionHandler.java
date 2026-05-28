@@ -1,6 +1,8 @@
 package com.example.usermanagement.controller;
 
 import com.example.usermanagement.exception.DuplicateEmailException;
+import com.example.usermanagement.exception.InvalidCredentialsException;
+import com.example.usermanagement.exception.TooManyLoginAttemptsException;
 import com.example.usermanagement.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -63,6 +65,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDuplicateEmail(final DuplicateEmailException ex,
             final HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(final InvalidCredentialsException ex,
+            final HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler(TooManyLoginAttemptsException.class)
+    public ResponseEntity<ErrorResponse> handleTooManyLoginAttempts(final TooManyLoginAttemptsException ex,
+            final HttpServletRequest request) {
+        return build(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request, null);
     }
 
     /**
